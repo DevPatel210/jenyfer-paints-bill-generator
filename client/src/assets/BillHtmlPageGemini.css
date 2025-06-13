@@ -1,0 +1,233 @@
+/* General Body and Print Setup */
+body {
+  background-color: #f0f0f0;
+  font-family: Arial, sans-serif;
+}
+
+.bill-wrapper {
+  margin: 20px auto;
+  padding: 20px;
+  max-width: 800px;
+}
+
+.bill-container {
+  background: #fff;
+  padding: 20px;
+  border: 1px solid #000;
+  font-size: 12px;
+  color: #000;
+}
+
+p {
+  margin: 2px 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+/* --- Header Section --- */
+.header {
+  text-align: center;
+  border-bottom: 2px solid #000;
+  padding-bottom: 5px;
+  position: relative;
+}
+.header-main h1 {
+  font-size: 28px;
+  margin: 0;
+  font-weight: bold;
+}
+.header-main p {
+  margin: 2px 0;
+  font-size: 11px;
+}
+.original-copy {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-weight: bold;
+}
+
+/* --- Info Bar Section --- */
+.info-bar {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  border-bottom: 2px solid #000;
+  padding: 5px 0;
+}
+.gst-pan {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+}
+.tax-invoice {
+  border: 1px solid #000;
+  padding: 5px 10px;
+  font-weight: bold;
+}
+
+/* --- Customer & Invoice Details --- */
+.customer-details {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 2px solid #000;
+  padding: 5px 0;
+}
+.bill-to {
+  width: 50%;
+  padding-right: 10px;
+}
+.invoice-details {
+  width: 50%;
+  padding-left: 10px;
+  border-left: 1px solid #000;
+  text-align: start;
+}
+
+/* --- Products Table --- */
+.products-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 5px;
+}
+.products-table th, .products-table td {
+  border: 1px solid #000;
+  padding: 4px;
+  text-align: center;
+  vertical-align: top;
+}
+.products-table th {
+  font-weight: bold;
+}
+.products-table .sub-header {
+  font-weight: normal;
+  border-top: none;
+}
+.products-table .sr-no { width: 4%; }
+.products-table .item-desc {
+  width: 30%;
+}
+.products-table .hsn-code {
+  width: 8%;
+}
+.package-info {
+  text-align: center;
+  font-size: 11px;
+}
+.empty-row td {
+  height: 24px; /* Ensure empty rows have height */
+}
+
+/* --- Summary, Footer, Bank, Terms --- */
+.summary-footer-container {
+  display: flex;
+  border-top: 2px solid #000;
+}
+.left-panel {
+  width: 55%;
+  padding-right: 5px;
+  border-right: 1px solid #000;
+}
+.right-panel {
+  width: 45%;
+  padding-left: 5px;
+  display: flex;
+  flex-direction: column;
+}
+
+.bank-details, .terms {
+  padding: 5px 0;
+}
+.terms {
+  margin-top: 5px;
+  font-size: 12px;
+}
+pre {
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  margin: 0;
+  white-space: pre-wrap; /* Allows text to wrap */
+}
+.totals-table {
+  margin: 5px;
+  width: 100%;
+  border-collapse: collapse;
+}
+.totals-table td {
+  padding: 4px;
+}
+.totals-table .ps-col {
+  width: 30px;
+  border-left: 1px solid #ccc;
+}
+.grand-total {
+  font-weight: bold;
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #000;
+}
+.amount-in-words {
+  padding: 10px 0;
+}
+.signature {
+  margin-top: 5px;
+  text-align: right;
+}
+.signature-space {
+  height: 40px;
+}
+.align-right {
+  text-align: right;
+}
+.footer-note {
+  text-align: center;
+  margin-top: 10px;
+  font-style: italic;
+}
+
+
+/* --- Action Buttons (No Print) --- */
+.action-buttons {
+  text-align: center;
+  margin-top: 20px;
+}
+.print-btn, .back-btn {
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin: 0 10px;
+}
+.print-btn {
+  background-color: #4CAF50;
+  color: white;
+}
+.back-btn {
+  background-color: #f44336;
+  color: white;
+}
+
+/* --- Print-Specific Styles --- */
+@media print {
+  body {
+      background-color: #fff;
+  }
+  .bill-wrapper {
+      margin: 0;
+      padding: 0;
+      max-width: 100%;
+  }
+  .bill-container {
+      border: none;
+      box-shadow: none;
+  }
+  .action-buttons {
+      display: none; /* Hide buttons when printing */
+  }
+  @page {
+      size: A4 portrait;
+      margin: 1cm;
+  }
+}
