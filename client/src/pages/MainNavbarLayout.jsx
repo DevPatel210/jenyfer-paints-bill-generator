@@ -1,7 +1,7 @@
 // Layout.js
 import React from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
-import { ToastContainer } from 'react-toastify'; // Or your toast library
+import { ToastContainer } from 'react-toastify';
 
 function NavBar() {
   const navigate = useNavigate();

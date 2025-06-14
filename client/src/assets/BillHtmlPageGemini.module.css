@@ -91,15 +91,21 @@ strong {
   width: 100%;
   border-collapse: collapse;
   margin-top: 5px;
+  /* margin-bottom: 5px; */
+  border-radius: 0;
 }
 .products-table th, .products-table td {
   border: 1px solid #000;
-  padding: 4px;
+  padding: 5px 4px;
   text-align: center;
   vertical-align: top;
 }
 .products-table th {
   font-weight: bold;
+}
+.products-table td {
+  border-bottom: none;
+  border-top: none;
 }
 .products-table .sub-header {
   font-weight: normal;
@@ -118,6 +124,8 @@ strong {
 }
 .empty-row td {
   height: 24px; /* Ensure empty rows have height */
+  /* border-bottom: none;
+  border-top: none; */
 }
 
 /* --- Summary, Footer, Bank, Terms --- */
@@ -137,11 +145,11 @@ strong {
   flex-direction: column;
 }
 
-.bank-details, .terms {
-  padding: 5px 0;
+.bank-details{
+  padding-top: 15px;
 }
 .terms {
-  margin-top: 5px;
+  padding: 10px 0;
   font-size: 12px;
 }
 pre {
@@ -152,7 +160,8 @@ pre {
 }
 .totals-table {
   margin: 5px;
-  width: 100%;
+  width: 98%;
+  min-width: 0;
   border-collapse: collapse;
 }
 .totals-table td {

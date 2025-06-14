@@ -45,6 +45,8 @@ const billSchema = new mongoose.Schema({
   invoiceNo: { type: String, required: true },
   date: { type: Date, required: true },
   transportName: String,
+  vehicleNo: String,
+  lrNo: String,
   total: Number,
   cgst: Number,
   sgst: Number,
