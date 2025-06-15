@@ -23,8 +23,10 @@ const productSchema = new mongoose.Schema({
   name: { type: String, required: true },
   hsnCode: String,
   unit: { type: String, enum: ['kg', 'litre'], default: 'kg' },
-  packings: [{type: String}], // e.g., '1.0', '0.500', '1.25
-  rate: { type: Number, required: true },
+  packings: [{
+    value: String, // e.g., '1.0', '0.500', '1.25
+    rate: Number, // e.g., 100, 200, 500
+  }],
 });
 
 const billSchema = new mongoose.Schema({
@@ -45,6 +47,8 @@ const billSchema = new mongoose.Schema({
   invoiceNo: { type: String, required: true },
   date: { type: Date, required: true },
   transportName: String,
+  vehicleNo: String,
+  lrNo: String,
   total: Number,
   cgst: Number,
   sgst: Number,

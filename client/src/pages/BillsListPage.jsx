@@ -19,7 +19,7 @@ function BillsListPage() {
   return (
     <div className="bills-list-container">
       <h2>Bills</h2>
-      <button onClick={() => navigate('/bill/new')}>Generate New Bill</button>
+      <button onClick={() => navigate('/bill/new')} className="new-bill-btn">Generate New Bill</button>
       <table>
         <thead>
           <tr>
@@ -38,8 +38,7 @@ function BillsListPage() {
               <td>{bill.vendorId?.name}</td>
               <td>{bill.grandTotal}</td>
               <td>
-                <button onClick={() => handleDownload(bill._id)}>Download PDF</button>
-                <button onClick={() => navigate(`/bill/new?copy=${bill._id}`)}>Regenerate</button>
+                <button onClick={() => handleDownload(bill._id)} className="download-btn">Download PDF</button>
               </td>
             </tr>
           ))}
