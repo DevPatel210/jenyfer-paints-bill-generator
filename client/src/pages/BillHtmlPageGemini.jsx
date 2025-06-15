@@ -116,8 +116,8 @@ function BillHtmlPageGemini() {
   const { id } = useParams();
   const [bill, setBill] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [bankDetails] = useState('UNION BANK OF INDIA\nA/C: 454801010028124\nIFSC: UBIN0545481\nBranch: Bapunagar Ahmedabad');
-  const [terms] = useState('1. Goods once sold will not be taken back.\n2. Payment in 10 days from bill date.\n3. Subject to Ahmedabad Jurisdiction.');
+  const [bankDetails] = useState('BANK OF BARODA\nA/C: 03360200001853\nIFSC: BARBOINDRAK\nBranch: Rakhial Industrial Estate Branch');
+  const [terms] = useState('1. Goods once sold will not be taken back.\n2. Payment in 45 days from bill date.\n3. Subject to Ahmedabad Jurisdiction.');
   const navigate = useNavigate();
 
   useEffect(() => {

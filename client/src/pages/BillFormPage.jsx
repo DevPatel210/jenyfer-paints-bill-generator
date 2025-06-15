@@ -119,7 +119,7 @@ function BillFormPage() {
       if (i === index) {
         console.log({field, value});
         let newValue = value;
-        if (field === 'qty' || field === 'rate' || field === 'discount' || field === 'packing') {
+        if (field === 'qty' || field === 'rate' || field === 'discount') {
           newValue = parseFloat(value) || 0;
         }
         
@@ -131,21 +131,26 @@ function BillFormPage() {
           console.log(selectedProduct)
           updatedProduct = {
             ...updatedProduct,
-            rate: selectedProduct ? selectedProduct.rate : 0,
+            rate: 0,
             qty: 1, // Reset quantity when product changes
             discount: 0, // Reset discount when product changes
             packing: '', // Reset packing when product changes
             packingOptions: selectedProduct ? selectedProduct.packings : []
           };
         }
-        console.log(updatedProduct);
+        if(field === 'packing') {
+          const selectedProduct = products.find(prod => prod._id === p.productId);
+          const currentPacking = selectedProduct ? selectedProduct.packings.find(p => p.value === newValue) : '';
+          updatedProduct.packing = currentPacking.value || '';
+          updatedProduct.rate = parseFloat(currentPacking.rate) || '';
+        }
+        // console.log(updatedProduct);
         // Recalculate amount immediately after relevant fields change
         const currentQty = (field === 'qty') ? newValue : updatedProduct.qty;
         const currentRate = (field === 'rate') ? newValue : updatedProduct.rate;
         const currentDiscount = (field === 'discount') ? newValue : updatedProduct.discount;
-        const currentPacking = (field === 'packing') ? newValue : updatedProduct.packing;
         
-        const amount = currentQty * currentPacking * currentRate  - currentDiscount;
+        const amount = currentQty * currentRate  - currentDiscount;
         updatedProduct.amount = isNaN(amount) ? 0 : amount;
 
         return updatedProduct;
@@ -156,6 +161,10 @@ function BillFormPage() {
   };
 
   const addProductRow = () => {
+    if(form.products.length >= 10) {
+      toast.error('You can only add up to 10 products.');
+      return;
+    }
     setForm({
       ...form,
       products: [...form.products, { productId: '', packing: '', qty: 1, rate: 0, discount: 0, amount: 0 }],
@@ -172,13 +181,20 @@ function BillFormPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('/bills', { ...form, grandTotal });
+      // console.log({...form, grandTotal, total, cgst, sgst, igst});
+      await axios.post('/bills', { ...form, grandTotal, total, cgst, sgst, igst });
       toast.success('Bill generated successfully!');
       navigate('/');
     } catch (error) {
       toast.error('Error generating bill. Please check your inputs.');
       console.error('Error:', error);
     }
+  };
+
+  // Handler to prevent number input fields from changing value on scroll
+  const preventScrollChange = (e) => {
+    e.target.blur(); // Remove focus to prevent further changes
+    e.preventDefault(); // Prevent default scroll behavior
   };
 
   return (
@@ -289,16 +305,16 @@ function BillFormPage() {
                 >
                   <option value="">Select Packing</option>
                   {packingOptions.map((packingVal, i) => (
-                    <option key={i} value={packingVal}>
-                      {formatPackingLabel(packingVal, selectedProduct?.unit)}
+                    <option key={i} value={packingVal.value}>
+                      {formatPackingLabel(packingVal.value, selectedProduct?.unit)}
                     </option>
                   ))}
                 </select>
 
-                <input type="number" min="1" value={p.qty} onChange={e => handleProductChange(idx, 'qty', e.target.value)} placeholder="Qty" required />
-                <input type="number" min="0" value={p.rate} onChange={e => handleProductChange(idx, 'rate', e.target.value)} placeholder="Rate" required />
-                <input type="number" min="0" value={p.discount} onChange={e => handleProductChange(idx, 'discount', e.target.value)} placeholder="Discount" />
-                <input type="number" value={p.amount.toFixed(2)} readOnly placeholder="Amount" />
+                <input type="number" min="1" value={p.qty} onChange={e => handleProductChange(idx, 'qty', e.target.value)} onWheel={preventScrollChange} placeholder="Qty" required />
+                <input type="number" min="0" value={p.rate} onChange={e => handleProductChange(idx, 'rate', e.target.value)} onWheel={preventScrollChange} placeholder="Rate" required />
+                <input type="number" min="0" value={p.discount} onChange={e => handleProductChange(idx, 'discount', e.target.value)} onWheel={preventScrollChange} placeholder="Discount" />
+                <input type="number" value={p.amount.toFixed(2)} onWheel={preventScrollChange} readOnly placeholder="Amount" />
                 {form.products.length > 1 && <button type="button" onClick={() => removeProductRow(idx)}>-</button>}
               </div>
             );

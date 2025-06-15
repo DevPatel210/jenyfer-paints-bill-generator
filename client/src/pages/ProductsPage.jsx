@@ -2,11 +2,34 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
+const initialPackingRate = { value: '', rate: '' };
+
+const formatPackingLabel = (value, unit, rate) => {
+  if (!value || !unit || !rate) return 'Invalid Packing';
+  
+  const numericValue = parseFloat(value);
+  const mainUnitVal = Math.floor(numericValue);
+  const subUnitVal = Math.round((numericValue - mainUnitVal) * 1000);
+
+  const unitLabels = {
+    kg: { main: 'kg', sub: 'gm' },
+    litre: { main: 'ltr', sub: 'ml' },
+  };
+
+  const labels = unitLabels[unit] || { main: '', sub: '' };
+  return `${mainUnitVal} ${labels.main} ${subUnitVal} ${labels.sub}  |  ${rate}`;
+};
+
 function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
   const [showEdit, setShowEdit] = useState(null);
-  const [form, setForm] = useState({ name: '', hsnCode: '', unit: 'kg', rate: 0, packings: '' });
+  const [form, setForm] = useState({
+    name: '',
+    hsnCode: '',
+    unit: 'kg',
+    packings: [{ ...initialPackingRate }] // Default one entry for packing and rate
+  });
 
   const fetchProducts = () => {
     axios.get('/products')
@@ -16,13 +39,27 @@ function ProductsPage() {
 
   useEffect(fetchProducts, []);
 
-  const validatePackings = (packingsString) => {
-    if (!packingsString) return true;
-    const packingArray = packingsString.split(',').map(p => p.trim());
-    for (let i = 0; i < packingArray.length; i++) {
-      const packing = packingArray[i];
-      if (isNaN(parseFloat(packing)) || !isFinite(packing)) {
-        toast.error(`Invalid packing value: "${packing}". Please enter numbers separated by commas.`);
+  // New validation for array of packing objects
+  const validatePackings = (packingsArray) => {
+    if (!packingsArray || packingsArray.length === 0) {
+      toast.error('At least one packing entry is required.');
+      return false;
+    }
+    for (let i = 0; i < packingsArray.length; i++) {
+      const packing = packingsArray[i];
+      const packingValue = parseFloat(packing.value);
+      const packingRate = parseFloat(packing.rate);
+
+      if (isNaN(packingValue) || !isFinite(packingValue) || packing.value.trim() === '') {
+        toast.error(`Invalid packing value: "${packing.value}" at row ${i + 1}. Please enter a valid number.`);
+        return false;
+      }
+      if (isNaN(packingRate) || !isFinite(packingRate) || packing.rate.trim() === '') {
+        toast.error(`Invalid rate: "${packing.rate}" for packing value "${packing.value}" at row ${i + 1}. Please enter a valid number.`);
+        return false;
+      }
+      if (packingValue <= 0 || packingRate < 0) {
+        toast.error(`Packing value must be greater than 0 and Rate must be non-negative at row ${i + 1}.`);
         return false;
       }
     }
@@ -33,13 +70,24 @@ function ProductsPage() {
     if (!validatePackings(form.packings)) {
       return;
     }
-    const packingsToSend = form.packings ? form.packings.split(',').map(p => parseFloat(p.trim())) : [];
+
+    // Ensure all values are numbers
+    const packingsToSend = form.packings.map(p => ({
+      value: parseFloat(p.value),
+      rate: parseFloat(p.rate)
+    }));
 
     try {
+      // console.log({...form,packings: packingsToSend});
       await axios.post('/products', { ...form, packings: packingsToSend });
       toast.success('Product added');
       setShowAdd(false);
-      setForm({ name: '', hsnCode: '', unit: 'kg', rate: 0, packings: '' });
+      setForm({
+        name: '',
+        hsnCode: '',
+        unit: 'kg',
+        packings: [{ ...initialPackingRate }] // Reset to default single entry
+      });
       fetchProducts();
     } catch (error) {
       toast.error('Error adding product');
@@ -48,16 +96,30 @@ function ProductsPage() {
   };
 
   const handleEdit = async () => {
+    // Validate the new 'packings' array structure
     if (!validatePackings(form.packings)) {
       return;
     }
-    const packingsToSend = form.packings ? form.packings.split(',').map(p => parseFloat(p.trim())) : [];
+
+    // Prepare packings data to send to backend
+    // Ensure all values are numbers
+    const packingsToSend = form.packings.map(p => ({
+      value: parseFloat(p.value),
+      rate: parseFloat(p.rate)
+    }));
 
     try {
-      await axios.put(`/products/${showEdit._id}`, { ...form, packings: packingsToSend });
+      // Remove 'rate' from form data being sent as it's now per packing
+      const { rate, ...dataToSend } = form; // Destructure to exclude 'rate'
+      await axios.put(`/products/${showEdit._id}`, { ...dataToSend, packings: packingsToSend });
       toast.success('Product updated');
       setShowEdit(null);
-      setForm({ name: '', hsnCode: '', unit: 'kg', rate: 0, packings: '' });
+      setForm({
+        name: '',
+        hsnCode: '',
+        unit: 'kg',
+        packings: [{ ...initialPackingRate }] // Reset to default single entry
+      });
       fetchProducts();
     } catch (error) {
       toast.error('Error updating product');
@@ -65,13 +127,57 @@ function ProductsPage() {
     }
   };
 
+  // Handler for changing packing value or rate
+  const handlePackingRateChange = (index, field, value) => {
+    const newPackings = [...form.packings];
+    newPackings[index][field] = value;
+    setForm({ ...form, packings: newPackings });
+  };
+
+  // Handler for adding a new packing-rate row
+  const addPackingRow = () => {
+    setForm({
+      ...form,
+      packings: [...form.packings, { ...initialPackingRate }]
+    });
+  };
+
+  // Handler for removing a packing-rate row
+  const removePackingRow = (index) => {
+    const newPackings = form.packings.filter((_, i) => i !== index);
+    setForm({ ...form, packings: newPackings });
+  };
+
+  // Handler to prevent number input fields from changing value on scroll
+  const preventScrollChange = (e) => {
+    e.target.blur(); // Remove focus to prevent further changes
+    e.preventDefault(); // Prevent default scroll behavior
+  };
+
+
   return (
     <div className="products-page">
       <h2>Products</h2>
-      <button className='new-bill-btn' onClick={() => { setShowAdd(true); setForm({ name: '', hsnCode: '', unit: 'kg', rate: 0, packings: '' }); }}>Add Product</button>
+      <button
+        className='new-bill-btn'
+        onClick={() => {
+          setShowAdd(true);
+          setForm({
+            name: '',
+            hsnCode: '',
+            unit: 'kg',
+            packings: [{ ...initialPackingRate }] // Reset for add
+          });
+        }}>Add Product</button>
       <table>
         <thead>
-          <tr><th>Name</th><th>HSN Code</th><th>Unit</th><th>Rate</th><th>Packings</th><th>Actions</th></tr>
+          <tr>
+            <th>Name</th>
+            <th>HSN Code</th>
+            <th>Unit</th>
+            <th>Packings & Rates</th>
+            <th>Actions</th>
+          </tr>
         </thead>
         <tbody>
           {products.map(p => (
@@ -79,9 +185,38 @@ function ProductsPage() {
               <td>{p.name}</td>
               <td>{p.hsnCode}</td>
               <td>{p.unit}</td>
-              <td>{p.rate}</td>
-              <td>{Array.isArray(p.packings) ? p.packings.join(', ') : p.packings}</td>
-              <td><button onClick={() => { setShowEdit(p); setForm({ ...p, packings: Array.isArray(p.packings) ? p.packings.join(',') : p.packings || '' }); }} className="edit-btn">Edit</button></td>
+              <td>
+                {Array.isArray(p.packings) && p.packings.length > 0 ? (
+                  p.packings.map((pr, idx) => (
+                    <div key={idx}>
+                      {formatPackingLabel(pr.value, p.unit, pr.rate)}
+                    </div>
+                  ))
+                ) : (
+                  'N/A' // Handle cases where packings might be empty or not an array
+                )}
+              </td>
+              <td>
+                <button
+                  onClick={() => {
+                    setShowEdit(p);
+                    // Ensure packings are formatted as array of objects for edit
+                    setForm({
+                      ...p,
+                      // If p.packings is old string/array of numbers, convert to new format
+                      packings: Array.isArray(p.packings) && p.packings.length > 0
+                        ? p.packings.map(pr => ({
+                            value: pr.value !== undefined ? pr.value : pr, // Handle old array of numbers
+                            rate: pr.rate !== undefined ? pr.rate : 0 // Default rate for old packing values
+                          }))
+                        : [{ ...initialPackingRate }] // Default for empty/non-array
+                    });
+                  }}
+                  className="edit-btn"
+                >
+                  Edit
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -105,22 +240,58 @@ function ProductsPage() {
                 <option value="litre">Litre</option>
               </select>
             </div>
+
+            {/* Dynamic Packing and Rate Inputs */}
             <div className="form-field">
-              <label htmlFor="rate">Rate:</label>
-              <input id="rate" placeholder="Rate" type="number" value={form.rate} onChange={e => setForm({ ...form, rate: e.target.value })} />
+              <label>Packings & Rates:</label>
+              {form.packings.map((packing, index) => (
+                <div key={index} className="packing-rate-row" style={{ display: 'flex', gap: '10px', marginBottom: '5px' }}>
+                  <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder="Packing Value"
+                    value={packing.value}
+                    onChange={(e) => handlePackingRateChange(index, 'value', e.target.value)}
+                    onWheel={preventScrollChange}
+                    style={{ flex: 1 }}
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder="Rate"
+                    value={packing.rate}
+                    onChange={(e) => handlePackingRateChange(index, 'rate', e.target.value)}
+                    onWheel={preventScrollChange}
+                    style={{ flex: 1 }}
+                  />
+                  {form.packings.length > 1 && ( // Allow removing if more than one entry
+                    <button type="button" onClick={() => removePackingRow(index)}>-</button>
+                  )}
+                </div>
+              ))}
+              <button type="button" onClick={addPackingRow} style={{ marginTop: '10px' }}>
+                Add New Packing
+              </button>
             </div>
-            <div className="form-field">
-              <label htmlFor="packings">Packings:</label>
-              <input
-                id="packings"
-                placeholder="e.g., 1.0,2.25,1.5,30"
-                value={form.packings}
-                onChange={e => setForm({ ...form, packings: e.target.value })}
-              />
-            </div>
-            <div className="modal-actions"> {/* Group buttons for better layout */}
+
+            <div className="modal-actions">
               <button onClick={showAdd ? handleAdd : handleEdit}>{showAdd ? 'Add' : 'Update'}</button>
-              <button onClick={() => { setShowAdd(false); setShowEdit(null); setForm({ name: '', hsnCode: '', unit: 'kg', rate: 0, packings: '' }); }}>Cancel</button>
+              <button
+                onClick={() => {
+                  setShowAdd(false);
+                  setShowEdit(null);
+                  setForm({
+                    name: '',
+                    hsnCode: '',
+                    unit: 'kg',
+                    packings: [{ ...initialPackingRate }] // Reset to default
+                  });
+                }}
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>
