@@ -50,11 +50,11 @@ function ProductsPage() {
       const packingValue = parseFloat(packing.value);
       const packingRate = parseFloat(packing.rate);
 
-      if (isNaN(packingValue) || !isFinite(packingValue) || packing.value.trim() === '') {
+      if (isNaN(packingValue) || !isFinite(packingValue)) {
         toast.error(`Invalid packing value: "${packing.value}" at row ${i + 1}. Please enter a valid number.`);
         return false;
       }
-      if (isNaN(packingRate) || !isFinite(packingRate) || packing.rate.trim() === '') {
+      if (isNaN(packingRate) || !isFinite(packingRate)) {
         toast.error(`Invalid rate: "${packing.rate}" for packing value "${packing.value}" at row ${i + 1}. Please enter a valid number.`);
         return false;
       }
