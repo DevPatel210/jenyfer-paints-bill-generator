@@ -28,7 +28,7 @@ function App() {
         <Route path="/bill/:id/html" element={<PrivateRoute><BillHtmlPageGemini /></PrivateRoute>} />
         <Route element={<MainLayout />}>
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          {/* <Route path="/register" element={<RegisterPage />} /> */}
           <Route path="/" element={<PrivateRoute><BillsListPage /></PrivateRoute>} />
           <Route path="/bill/new" element={<PrivateRoute><BillFormPage /></PrivateRoute>} />
           <Route path="/vendors" element={<PrivateRoute><VendorsPage /></PrivateRoute>} />
