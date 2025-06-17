@@ -166,9 +166,11 @@ function BillHtmlPageGemini() {
           <div className={styles["customer-details"]}>
             <div className={styles["bill-to"]}>
               <p><strong>Bill To:</strong></p>
-              <p>{bill.vendorId?.name}</p>
+              <p><strong>{bill.vendorId?.name}</strong></p>
               <p>{bill.vendorId?.address}</p>
-              <p>Mobile no:- {bill.vendorId?.phone}</p>
+              {bill.vendorId?.gstNo ? (<p><strong>GST No: {bill.vendorId?.gstNo}</strong></p> ) : ''}
+              {bill.vendorId?.phone ? (<p>Mobile No: {bill.vendorId?.phone}</p> ) : ''}
+              {bill.vendorId?.panNo ? (<p>PAN No: {bill.vendorId?.panNo}</p> ) : ''}
             </div>
             <div className={styles["invoice-details"]}>
                 <p><strong>INVOICE NO :</strong> {bill.invoiceNo}</p>
