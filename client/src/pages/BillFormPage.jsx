@@ -1,22 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 // Helper function to format packing values for the dropdown label
 const formatPackingLabel = (value, unit) => {
-  if (!value || !unit) return 'Select Packing';
-  
+  if (!value || !unit) return "Select Packing";
+
   const numericValue = parseFloat(value);
   const mainUnitVal = Math.floor(numericValue);
   const subUnitVal = Math.round((numericValue - mainUnitVal) * 1000);
 
   const unitLabels = {
-    kg: { main: 'kg', sub: 'gm' },
-    litre: { main: 'ltr', sub: 'ml' },
+    kg: { main: "kg", sub: "gm" },
+    litre: { main: "ltr", sub: "ml" },
   };
 
-  const labels = unitLabels[unit] || { main: '', sub: '' };
+  const labels = unitLabels[unit] || { main: "", sub: "" };
   return `${mainUnitVal} ${labels.main} ${subUnitVal} ${labels.sub}`;
 };
 
@@ -24,35 +24,68 @@ const numberToWords = (num) => {
   // Apply Math.round() to the number first based on the requirement
   const roundedNum = Math.round(num);
 
-  if (roundedNum === 0) return 'Zero Only';
+  if (roundedNum === 0) return "Zero Only";
 
-  const units = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
-  const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
-  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+  const units = [
+    "",
+    "One",
+    "Two",
+    "Three",
+    "Four",
+    "Five",
+    "Six",
+    "Seven",
+    "Eight",
+    "Nine",
+  ];
+  const teens = [
+    "Ten",
+    "Eleven",
+    "Twelve",
+    "Thirteen",
+    "Fourteen",
+    "Fifteen",
+    "Sixteen",
+    "Seventeen",
+    "Eighteen",
+    "Nineteen",
+  ];
+  const tens = [
+    "",
+    "",
+    "Twenty",
+    "Thirty",
+    "Forty",
+    "Fifty",
+    "Sixty",
+    "Seventy",
+    "Eighty",
+    "Ninety",
+  ];
 
   // Helper function to convert a number (0-999) to words
   const convertHundreds = (n) => {
-    let result = '';
+    let result = "";
     if (n >= 100) {
-      result += units[Math.floor(n / 100)] + ' Hundred ';
+      result += units[Math.floor(n / 100)] + " Hundred ";
       n %= 100;
     }
     if (n >= 10) {
       if (n >= 10 && n <= 19) {
-        result += teens[n - 10] + ' ';
+        result += teens[n - 10] + " ";
         n = 0; // Handled
       } else {
-        result += tens[Math.floor(n / 10)] + ' ';
+        result += tens[Math.floor(n / 10)] + " ";
         n %= 10;
       }
     }
     if (n > 0) {
-      result += units[n] + ' ';
+      result += units[n] + " ";
     }
     return result.trim();
   };
 
-  let words = '';
+  let words = "";
   let currentNum = roundedNum; // Use the rounded number for conversion
 
   const segments = [];
@@ -64,37 +97,36 @@ const numberToWords = (num) => {
     currentNum = Math.floor(currentNum / 100);
   }
 
-  const indianScales = [
-    '',
-    'Thousand',
-    'Lakh',
-    'Crore',
-    'Arab'
-  ];
+  const indianScales = ["", "Thousand", "Lakh", "Crore", "Arab"];
 
   for (let i = 0; i < segments.length; i++) {
     const segmentValue = segments[i];
     if (segmentValue > 0) {
-      words = convertHundreds(segmentValue) + ' ' + indianScales[i] + ' ' + words;
+      words =
+        convertHundreds(segmentValue) + " " + indianScales[i] + " " + words;
     }
   }
 
   words = words.trim();
-  return words + ' Only';
+  return words + " Only";
 };
-
 
 function BillFormPage() {
   const [vendors, setVendors] = useState([]);
   const [products, setProducts] = useState([]);
+  const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [invoiceError, setInvoiceError] = useState("");
   const [form, setForm] = useState({
-    vendorId: '',
-    date: '', // This will be set by the date input
-    transportName: '',
-    vehicleNo: '',
-    lrNo: '',
+    vendorId: "",
+    date: "",
+    invoiceNo: "",
+    transportName: "",
+    vehicleNo: "",
+    lrNo: "",
     outsideGujarat: false,
-    products: [{ productId: '', packing: '', qty: 1, rate: 0, discount: 0, amount: 0 }],
+    products: [
+      { productId: "", packing: "", qty: 1, rate: 0, discount: 0, amount: 0 },
+    ],
   });
   const navigate = useNavigate();
 
@@ -105,11 +137,25 @@ function BillFormPage() {
   const igst = form.outsideGujarat ? total * 0.18 : 0;
   const grandTotal = total + cgst + sgst + igst;
 
-  // Fetch vendors and products
+  // Fetch vendors, products, and next invoice number
   useEffect(() => {
-    axios.get('/vendors').then(res => setVendors(res.data));
-    axios.get('/products').then(res => setProducts(res.data));
+    axios.get("/vendors").then((res) => setVendors(res.data));
+    axios.get("/products").then((res) => setProducts(res.data));
   }, []);
+
+  useEffect(() => {
+    // Fetch next invoice number when date changes
+    let date = new Date();
+    if (form.date) {
+      date = form.date;
+    }
+    axios.get(`/next-invoice-no?date=${date}`).then((res) => {
+      const inv = res.data.invoiceNo;
+      // Only show the number part (after last dash)
+      setInvoiceNumber(inv.split("-")[2] || "");
+      setForm((f) => ({ ...f, invoiceNo: inv.split("-")[2] || "" }));
+    });
+  }, [form.date]);
 
   // Removed the problematic useEffect for amount calculation
   // The amount will now be calculated directly in handleProductChange
@@ -117,40 +163,45 @@ function BillFormPage() {
   const handleProductChange = (index, field, value) => {
     const updatedProducts = form.products.map((p, i) => {
       if (i === index) {
-        console.log({field, value});
         let newValue = value;
-        if (field === 'qty' || field === 'rate' || field === 'discount') {
+        if (field === "qty" || field === "rate" || field === "discount") {
           newValue = parseFloat(value) || 0;
         }
-        
+
         let updatedProduct = { ...p, [field]: newValue };
 
         // If product ID changes, update packing options and reset packing
-        if (field === 'productId') {
-          const selectedProduct = products.find(prod => prod._id === newValue);
-          console.log(selectedProduct)
+        if (field === "productId") {
+          const selectedProduct = products.find(
+            (prod) => prod._id === newValue
+          );
           updatedProduct = {
             ...updatedProduct,
             rate: 0,
             qty: 1, // Reset quantity when product changes
             discount: 0, // Reset discount when product changes
-            packing: '', // Reset packing when product changes
-            packingOptions: selectedProduct ? selectedProduct.packings : []
+            packing: "", // Reset packing when product changes
+            packingOptions: selectedProduct ? selectedProduct.packings : [],
           };
         }
-        if(field === 'packing') {
-          const selectedProduct = products.find(prod => prod._id === p.productId);
-          const currentPacking = selectedProduct ? selectedProduct.packings.find(p => p.value === newValue) : '';
-          updatedProduct.packing = currentPacking.value || '';
-          updatedProduct.rate = parseFloat(currentPacking.rate) || '';
+        if (field === "packing") {
+          const selectedProduct = products.find(
+            (prod) => prod._id === p.productId
+          );
+          const currentPacking = selectedProduct
+            ? selectedProduct.packings.find((p) => p.value === newValue)
+            : "";
+          updatedProduct.packing = currentPacking.value || "";
+          updatedProduct.rate = parseFloat(currentPacking.rate) || "";
         }
         // console.log(updatedProduct);
         // Recalculate amount immediately after relevant fields change
-        const currentQty = (field === 'qty') ? newValue : updatedProduct.qty;
-        const currentRate = (field === 'rate') ? newValue : updatedProduct.rate;
-        const currentDiscount = (field === 'discount') ? newValue : updatedProduct.discount;
-        
-        const amount = currentQty * currentRate  - currentDiscount;
+        const currentQty = field === "qty" ? newValue : updatedProduct.qty;
+        const currentRate = field === "rate" ? newValue : updatedProduct.rate;
+        const currentDiscount =
+          field === "discount" ? newValue : updatedProduct.discount;
+
+        const amount = currentQty * currentRate - currentDiscount;
         updatedProduct.amount = isNaN(amount) ? 0 : amount;
 
         return updatedProduct;
@@ -161,13 +212,16 @@ function BillFormPage() {
   };
 
   const addProductRow = () => {
-    if(form.products.length >= 10) {
-      toast.error('You can only add up to 10 products.');
+    if (form.products.length >= 10) {
+      toast.error("You can only add up to 10 products.");
       return;
     }
     setForm({
       ...form,
-      products: [...form.products, { productId: '', packing: '', qty: 1, rate: 0, discount: 0, amount: 0 }],
+      products: [
+        ...form.products,
+        { productId: "", packing: "", qty: 1, rate: 0, discount: 0, amount: 0 },
+      ],
     });
   };
 
@@ -180,14 +234,30 @@ function BillFormPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setInvoiceError("");
     try {
-      // console.log({...form, grandTotal, total, cgst, sgst, igst});
-      await axios.post('/bills', { ...form, grandTotal, total, cgst, sgst, igst });
-      toast.success('Bill generated successfully!');
-      navigate('/');
+      // Compose invoiceNo in backend format
+      await axios.post("/bills", {
+        ...form,
+        invoiceNo: invoiceNumber,
+        grandTotal,
+        total,
+        cgst,
+        sgst,
+        igst,
+      });
+      toast.success("Bill generated successfully!");
+      navigate("/");
     } catch (error) {
-      toast.error('Error generating bill. Please check your inputs.');
-      console.error('Error:', error);
+      if (error.response && error.response.status === 409) {
+        setInvoiceError(
+          error.response.data.message ||
+            "Invoice number already exists for this financial year."
+        );
+      } else {
+        toast.error("Error generating bill. Please check your inputs.");
+      }
+      console.error("Error:", error);
     }
   };
 
@@ -217,9 +287,9 @@ function BillFormPage() {
             ))}
           </select>
         </div>
-        
-        <div className='flex-horizontal-container'>
-          <div className='flex-vertical-container'>
+
+        <div className="flex-horizontal-container">
+          <div className="flex-vertical-container">
             <div className="form-field">
               <label htmlFor="date">Date:</label>
               <input
@@ -241,8 +311,8 @@ function BillFormPage() {
               />
             </div>
           </div>
-          
-          <div className='flex-vertical-container'>
+
+          <div className="flex-vertical-container">
             <div className="form-field">
               <label htmlFor="transportName">Transport Name:</label>
               <input
@@ -250,7 +320,9 @@ function BillFormPage() {
                 type="text"
                 placeholder="Transport Name"
                 value={form.transportName}
-                onChange={(e) => setForm({ ...form, transportName: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, transportName: e.target.value })
+                }
               />
             </div>
 
@@ -261,10 +333,28 @@ function BillFormPage() {
                 type="text"
                 placeholder="Vehicle No"
                 value={form.vehicleNo}
-                onChange={(e) => setForm({ ...form, vehicleNo: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, vehicleNo: e.target.value })
+                }
               />
             </div>
           </div>
+        </div>
+
+        <div className="form-field">
+          <label htmlFor="invoiceNo">Invoice Number:</label>
+          <input
+            id="invoiceNo"
+            type="number"
+            min="1"
+            value={invoiceNumber}
+            onChange={(e) => {
+              setInvoiceNumber(e.target.value);
+              setForm((f) => ({ ...f, invoiceNo: e.target.value }));
+            }}
+            required
+          />
+          {invoiceError && <div style={{ color: "red" }}>{invoiceError}</div>}
         </div>
 
         <h3>Products</h3>
@@ -276,53 +366,112 @@ function BillFormPage() {
           <div>Rate</div>
           <div>Discount (Rs)</div>
           <div>Amount</div>
-          {form.products.length > 1 && <div className="remove-col"></div>} {/* Placeholder for remove button column */}
+          {form.products.length > 1 && <div className="remove-col"></div>}{" "}
+          {/* Placeholder for remove button column */}
         </div>
 
         {form.products.map((p, idx) => {
-          const selectedProduct = products.find(prod => prod._id === p.productId);
-          const packingOptions = selectedProduct ? selectedProduct.packings : [];
-            return (
-              <div key={idx} className="product-row">
-                <select
-                  value={p.productId}
-                  onChange={e => handleProductChange(idx, 'productId', e.target.value)}
-                  required
-                >
-                  <option value="">Select Product</option>
-                  {products.map(product => (
-                    <option key={product._id} value={product._id}>
-                      {product.name}
-                    </option>
-                  ))}
-                </select>
-                
-                <select
-                  value={p.packing}
-                  onChange={e => handleProductChange(idx, 'packing', e.target.value)}
-                  required
-                  disabled={!p.productId || packingOptions.length === 0}
-                >
-                  <option value="">Select Packing</option>
-                  {packingOptions.map((packingVal, i) => (
-                    <option key={i} value={packingVal.value}>
-                      {formatPackingLabel(packingVal.value, selectedProduct?.unit)}
-                    </option>
-                  ))}
-                </select>
+          const selectedProduct = products.find(
+            (prod) => prod._id === p.productId
+          );
+          const packingOptions = selectedProduct
+            ? selectedProduct.packings
+            : [];
+          return (
+            <div key={idx} className="product-row">
+              <select
+                value={p.productId}
+                onChange={(e) =>
+                  handleProductChange(idx, "productId", e.target.value)
+                }
+                required
+              >
+                <option value="">Select Product</option>
+                {products.map((product) => (
+                  <option key={product._id} value={product._id}>
+                    {product.name}
+                  </option>
+                ))}
+              </select>
 
-                <input type="number" min="1" value={p.qty} onChange={e => handleProductChange(idx, 'qty', e.target.value)} onWheel={preventScrollChange} placeholder="Qty" required />
-                <input type="number" min="0" value={p.rate} onChange={e => handleProductChange(idx, 'rate', e.target.value)} onWheel={preventScrollChange} placeholder="Rate" required />
-                <input type="number" min="0" value={p.discount} onChange={e => handleProductChange(idx, 'discount', e.target.value)} onWheel={preventScrollChange} placeholder="Discount" />
-                <input type="number" value={p.amount.toFixed(2)} onWheel={preventScrollChange} readOnly placeholder="Amount" />
-                {form.products.length > 1 && <button type="button" onClick={() => removeProductRow(idx)}>-</button>}
-              </div>
-            );
+              <select
+                value={p.packing}
+                onChange={(e) =>
+                  handleProductChange(idx, "packing", e.target.value)
+                }
+                required
+                disabled={!p.productId || packingOptions.length === 0}
+              >
+                <option value="">Select Packing</option>
+                {packingOptions.map((packingVal, i) => (
+                  <option key={i} value={packingVal.value}>
+                    {formatPackingLabel(
+                      packingVal.value,
+                      selectedProduct?.unit
+                    )}
+                  </option>
+                ))}
+              </select>
+
+              <input
+                type="number"
+                min="1"
+                value={p.qty}
+                onChange={(e) =>
+                  handleProductChange(idx, "qty", e.target.value)
+                }
+                onWheel={preventScrollChange}
+                placeholder="Qty"
+                required
+              />
+              <input
+                type="number"
+                min="0"
+                value={p.rate}
+                onChange={(e) =>
+                  handleProductChange(idx, "rate", e.target.value)
+                }
+                onWheel={preventScrollChange}
+                placeholder="Rate"
+                required
+              />
+              <input
+                type="number"
+                min="0"
+                value={p.discount}
+                onChange={(e) =>
+                  handleProductChange(idx, "discount", e.target.value)
+                }
+                onWheel={preventScrollChange}
+                placeholder="Discount"
+              />
+              <input
+                type="number"
+                value={p.amount.toFixed(2)}
+                onWheel={preventScrollChange}
+                readOnly
+                placeholder="Amount"
+              />
+              {form.products.length > 1 && (
+                <button type="button" onClick={() => removeProductRow(idx)}>
+                  -
+                </button>
+              )}
+            </div>
+          );
         })}
-        <button type="button" onClick={addProductRow}>Add Product</button>
+        <button type="button" onClick={addProductRow}>
+          Add Product
+        </button>
         <div>
           <label>
-            <input type="checkbox" checked={form.outsideGujarat} onChange={e => setForm({ ...form, outsideGujarat: e.target.checked })}/>
+            <input
+              type="checkbox"
+              checked={form.outsideGujarat}
+              onChange={(e) =>
+                setForm({ ...form, outsideGujarat: e.target.checked })
+              }
+            />
             Is this bill for outside Gujarat?
           </label>
         </div>
