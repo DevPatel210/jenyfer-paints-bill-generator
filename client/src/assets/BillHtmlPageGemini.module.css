@@ -76,20 +76,31 @@ strong {
   padding: 5px 0;
 }
 .bill-to {
-  width: 50%;
+  /* Starts at 50%, but grows automatically if the non-wrapping
+     Mobile | Email row needs more room (min-width:auto = widest unbreakable content) */
+  flex: 1 1 50%;
+  min-width: auto;
   padding-right: 10px;
 }
 .invoice-details {
-  width: 50%;
+  flex: 1 1 50%;
+  min-width: 0;
   padding-left: 10px;
   border-left: 1px solid #000;
   text-align: start;
 }
 
-.vendor-meta-row,
+/* GST No / PAN No: separate, centered lines */
+.vendor-id-line {
+  text-align: center;
+  margin: 6px 0;
+}
+
+/* Mobile | Email: always on one line; never wraps, so the left section widens instead */
 .vendor-contact-row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  white-space: nowrap;
   align-items: center;
   gap: 12px;
   margin-top: 4px;
@@ -108,7 +119,8 @@ strong {
   /* margin-bottom: 5px; */
   border-radius: 0;
 }
-.products-table th, .products-table td {
+.products-table th,
+.products-table td {
   border: 1px solid #000;
   padding: 5px 4px;
   text-align: center;
@@ -125,7 +137,9 @@ strong {
   font-weight: normal;
   border-top: none;
 }
-.products-table .sr-no { width: 4%; }
+.products-table .sr-no {
+  width: 4%;
+}
 .products-table .item-desc {
   width: 30%;
 }
@@ -159,7 +173,7 @@ strong {
   flex-direction: column;
 }
 
-.bank-details{
+.bank-details {
   padding-top: 15px;
 }
 .terms {
@@ -209,13 +223,13 @@ pre {
   font-style: italic;
 }
 
-
 /* --- Action Buttons (No Print) --- */
 .action-buttons {
   text-align: center;
   margin-top: 20px;
 }
-.print-btn, .back-btn {
+.print-btn,
+.back-btn {
   padding: 10px 20px;
   font-size: 16px;
   border: none;
@@ -224,7 +238,7 @@ pre {
   margin: 0 10px;
 }
 .print-btn {
-  background-color: #4CAF50;
+  background-color: #4caf50;
   color: white;
 }
 .back-btn {
@@ -235,22 +249,22 @@ pre {
 /* --- Print-Specific Styles --- */
 @media print {
   body {
-      background-color: #fff;
+    background-color: #fff;
   }
   .bill-wrapper {
-      margin: 0;
-      padding: 0;
-      max-width: 100%;
+    margin: 0;
+    padding: 0;
+    max-width: 100%;
   }
   .bill-container {
-      border: none;
-      box-shadow: none;
+    border: none;
+    box-shadow: none;
   }
   .action-buttons {
-      display: none; /* Hide buttons when printing */
+    display: none; /* Hide buttons when printing */
   }
   @page {
-      size: A4 portrait;
-      margin: 1cm;
+    size: A4 portrait;
+    margin: 1cm;
   }
 }

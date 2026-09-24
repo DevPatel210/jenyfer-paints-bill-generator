@@ -151,10 +151,10 @@ function BillHtmlPageGemini() {
   const [bill, setBill] = useState(null);
   const [loading, setLoading] = useState(true);
   const [bankDetails] = useState(
-    "BANK OF BARODA\nA/C: 03360200001853\nIFSC: BARBOINDRAK\nBranch: Rakhial Industrial Estate Branch"
+    "BANK OF BARODA\nA/C: 03360200001853\nIFSC: BARBOINDRAK\nBranch: Rakhial Industrial Estate Branch",
   );
   const [terms] = useState(
-    "1. Goods once sold will not be taken back.\n2. Payment in 45 days from bill date.\n3. Subject to Ahmedabad Jurisdiction."
+    "1. Goods once sold will not be taken back.\n2. Payment in 45 days from bill date.\n3. Subject to Ahmedabad Jurisdiction.",
   );
   const navigate = useNavigate();
 
@@ -221,18 +221,17 @@ function BillHtmlPageGemini() {
               </p>
               <p>{bill.vendorId?.address}</p>
 
-              <div className={styles["vendor-meta-row"]}>
-                {bill.vendorId?.gstNo && (
-                  <span>
-                    <strong>GST No:</strong> {bill.vendorId.gstNo}
-                  </span>
-                )}
-                {bill.vendorId?.panNo && (
-                  <span>
-                    <strong>PAN No:</strong> {bill.vendorId.panNo}
-                  </span>
-                )}
-              </div>
+              {/* GST and PAN: each on its own centered line */}
+              {bill.vendorId?.gstNo && (
+                <p className={styles["vendor-id-line"]}>
+                  <strong>GST No:</strong> {bill.vendorId.gstNo}
+                </p>
+              )}
+              {bill.vendorId?.panNo && (
+                <p className={styles["vendor-id-line"]}>
+                  <strong>PAN No:</strong> {bill.vendorId.panNo}
+                </p>
+              )}
 
               {(bill.vendorId?.phone || bill.vendorId?.email) && (
                 <div className={styles["vendor-contact-row"]}>
@@ -308,7 +307,7 @@ function BillHtmlPageGemini() {
                 const discount = formatDiscount(p.discount, p.amount);
                 const weight = formatPackingLabel(
                   p.packing || "0",
-                  p.productId?.unit
+                  p.productId?.unit,
                 );
 
                 return (
@@ -354,7 +353,7 @@ function BillHtmlPageGemini() {
                     <td></td>
                     <td></td>
                   </tr>
-                )
+                ),
               )}
             </tbody>
           </table>
