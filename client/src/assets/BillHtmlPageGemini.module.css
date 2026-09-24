@@ -101,9 +101,10 @@ strong {
   display: flex;
   flex-wrap: nowrap;
   white-space: nowrap;
+  justify-content: center; /* centers a lone Mobile or Email, or both together */
   align-items: center;
   gap: 12px;
-  margin-top: 4px;
+  margin: 6px 0;
 }
 
 .meta-separator {
