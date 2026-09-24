@@ -259,12 +259,28 @@ pre {
   .bill-container {
     border: none;
     box-shadow: none;
+    /* remove vertical padding so the whole invoice fits on one page */
+    padding-top: 0;
+    padding-bottom: 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  /* slightly shorter filler rows in print so the footer line stays on page 1 */
+  .empty-row td {
+    height: 18px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+  }
+  .footer-note {
+    margin: 4px 0 0;
+    break-before: avoid;
+    page-break-before: avoid;
   }
   .action-buttons {
     display: none; /* Hide buttons when printing */
   }
   @page {
     size: A4 portrait;
-    margin: 1cm;
+    margin: 0.8cm;
   }
 }
