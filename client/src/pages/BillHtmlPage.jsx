@@ -29,19 +29,28 @@ function BillHtmlPage() {
       <hr />
       <div className="section">
         <div><b>Bill to:</b> {bill.vendorId?.name || ''}</div>
-        <div>{bill.vendorId?.address || ''}</div>
-        <div>Mobile no.: {bill.vendorId?.phone || ''}</div>
+        {bill.vendorId?.address ? <div>{bill.vendorId.address}</div> : null}
+        {bill.vendorId?.phone ? <div>Mobile no.: {bill.vendorId.phone}</div> : null}
+        {bill.vendorId?.email ? <div>Email: {bill.vendorId.email}</div> : null}
       </div>
       <div className="section">
         <table>
           <tbody>
-            <tr>
-              <td>GST NO: {bill.vendorId?.gstNo || ''}</td>
-              <td>PAN NO: {bill.vendorId?.panNo || ''}</td>
-              <td>INVOICE NO: {bill.invoiceNo}</td>
-              <td>DATE: {(bill.date ? new Date(bill.date).toISOString().slice(0,10) : '')}</td>
-              <td>TRANSPORT NAME: {bill.transportName || ''}</td>
-            </tr>
+            {(bill.vendorId?.gstNo || bill.vendorId?.panNo) ? (
+              <tr>
+                {bill.vendorId?.gstNo ? <td>GST NO: {bill.vendorId.gstNo}</td> : <td></td>}
+                {bill.vendorId?.panNo ? <td>PAN NO: {bill.vendorId.panNo}</td> : <td></td>}
+                <td>INVOICE NO: {bill.invoiceNo}</td>
+                <td>DATE: {(bill.date ? new Date(bill.date).toISOString().slice(0,10) : '')}</td>
+                <td>TRANSPORT NAME: {bill.transportName || ''}</td>
+              </tr>
+            ) : (
+              <tr>
+                <td>INVOICE NO: {bill.invoiceNo}</td>
+                <td>DATE: {(bill.date ? new Date(bill.date).toISOString().slice(0,10) : '')}</td>
+                <td>TRANSPORT NAME: {bill.transportName || ''}</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

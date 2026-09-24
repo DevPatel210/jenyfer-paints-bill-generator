@@ -237,6 +237,11 @@ function BillHtmlPageGemini() {
               ) : (
                 ""
               )}
+              {bill.vendorId?.email ? (
+                <p>Email: {bill.vendorId?.email}</p>
+              ) : (
+                ""
+              )}
             </div>
             <div className={styles["invoice-details"]}>
               <p>

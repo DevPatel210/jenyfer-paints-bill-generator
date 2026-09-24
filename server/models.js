@@ -17,6 +17,7 @@ const vendorSchema = new mongoose.Schema({
   gstNo: String,
   panNo: String,
   phone: String,
+  email: String,
 });
 
 const productSchema = new mongoose.Schema({

@@ -82,7 +82,6 @@ function VendorsPage() {
                 placeholder="PAN No."
                 value={form.panNo || ''}
                 onChange={e => setForm({ ...form, panNo: e.target.value.toUpperCase() })}
-                required
               />
             </div>
             <div className="form-field">
