@@ -86,6 +86,20 @@ strong {
   text-align: start;
 }
 
+.vendor-meta-row,
+.vendor-contact-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.meta-separator {
+  font-weight: bold;
+  color: #000;
+}
+
 /* --- Products Table --- */
 .products-table {
   width: 100%;

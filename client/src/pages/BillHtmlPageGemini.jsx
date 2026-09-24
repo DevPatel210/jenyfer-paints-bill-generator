@@ -220,27 +220,36 @@ function BillHtmlPageGemini() {
                 <strong>{bill.vendorId?.name}</strong>
               </p>
               <p>{bill.vendorId?.address}</p>
-              {bill.vendorId?.gstNo ? (
-                <p>
-                  <strong>GST No: {bill.vendorId?.gstNo}</strong>
-                </p>
-              ) : (
-                ""
-              )}
-              {bill.vendorId?.phone ? (
-                <p>Mobile No: {bill.vendorId?.phone}</p>
-              ) : (
-                ""
-              )}
-              {bill.vendorId?.panNo ? (
-                <p>PAN No: {bill.vendorId?.panNo}</p>
-              ) : (
-                ""
-              )}
-              {bill.vendorId?.email ? (
-                <p>Email: {bill.vendorId?.email}</p>
-              ) : (
-                ""
+
+              <div className={styles["vendor-meta-row"]}>
+                {bill.vendorId?.gstNo && (
+                  <span>
+                    <strong>GST No:</strong> {bill.vendorId.gstNo}
+                  </span>
+                )}
+                {bill.vendorId?.panNo && (
+                  <span>
+                    <strong>PAN No:</strong> {bill.vendorId.panNo}
+                  </span>
+                )}
+              </div>
+
+              {(bill.vendorId?.phone || bill.vendorId?.email) && (
+                <div className={styles["vendor-contact-row"]}>
+                  {bill.vendorId?.phone && (
+                    <span>
+                      <strong>Mobile No:</strong> {bill.vendorId.phone}
+                    </span>
+                  )}
+                  {bill.vendorId?.phone && bill.vendorId?.email && (
+                    <span className={styles["meta-separator"]}>|</span>
+                  )}
+                  {bill.vendorId?.email && (
+                    <span>
+                      <strong>Email:</strong> {bill.vendorId.email}
+                    </span>
+                  )}
+                </div>
               )}
             </div>
             <div className={styles["invoice-details"]}>
