@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { isAuthFailure } from '../auth';
 
 function VendorsPage() {
   const [vendors, setVendors] = useState([]);
@@ -20,7 +21,9 @@ function VendorsPage() {
       toast.success('Vendor added');
       setShowAdd(false); setForm({ name: '', address: '', gstNo: '', panNo: '', phone: '', email: '' });
       fetchVendors();
-    } catch { toast.error('Error adding vendor'); }
+    } catch (error) {
+      if (!isAuthFailure(error)) toast.error('Error adding vendor');
+    }
   };
   const handleEdit = async () => {
     try {
@@ -28,7 +31,9 @@ function VendorsPage() {
       toast.success('Vendor updated');
       setShowEdit(null); setForm({ name: '', address: '', gstNo: '', panNo: '', phone: '', email: '' });
       fetchVendors();
-    } catch { toast.error('Error updating vendor'); }
+    } catch (error) {
+      if (!isAuthFailure(error)) toast.error('Error updating vendor');
+    }
   };
 
   return (
@@ -52,6 +57,7 @@ function VendorsPage() {
         <div className="modal">
           <div className="modal-content">
             <h3>{showAdd ? 'Add Vendor' : 'Edit Vendor'}</h3>
+            <div className="modal-body">
             <div className="form-field">
               <label htmlFor="vendorName">Name:</label>
               <input
@@ -116,6 +122,7 @@ function VendorsPage() {
                 value={form.email || ''}
                 onChange={e => setForm({ ...form, email: e.target.value })}
               />
+            </div>
             </div>
             <div className="modal-actions">
               <button onClick={showAdd ? handleAdd : handleEdit}>{showAdd ? 'Add' : 'Update'}</button>

@@ -1,22 +1,25 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import BillFormPage from './pages/BillFormPage';
 import BillsListPage from './pages/BillsListPage';
 import VendorsPage from './pages/VendorsPage';
 import ProductsPage from './pages/ProductsPage';
-import RegisterPage from './pages/RegisterPage';
-import BillHtmlPage from './pages/BillHtmlPage';
 import BillHtmlPageGemini from './pages/BillHtmlPageGemini';
 import MainLayout from './pages/MainNavbarLayout';
-import { ToastContainer } from 'react-toastify';
+import { SESSION_EXPIRED_MESSAGE, getToken, isAuthenticated, logout } from './auth';
 import 'react-toastify/dist/ReactToastify.css';
 import './App.css';
 
 function PrivateRoute({ children }) {
-  const token = localStorage.getItem('token');
-  return token ? children : <Navigate to="/login" />;
+  const authed = isAuthenticated();
+
+  useEffect(() => {
+    if (!authed && getToken()) logout(SESSION_EXPIRED_MESSAGE);
+  }, [authed]);
+
+  if (authed) return children;
+  return <Navigate to="/login" replace />;
 }
 
 

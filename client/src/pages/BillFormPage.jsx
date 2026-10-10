@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { isAuthFailure } from "../auth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
@@ -254,7 +255,7 @@ function BillFormPage() {
           error.response.data.message ||
             "Invoice number already exists for this financial year."
         );
-      } else {
+      } else if (!isAuthFailure(error)) {
         toast.error("Error generating bill. Please check your inputs.");
       }
       console.error("Error:", error);

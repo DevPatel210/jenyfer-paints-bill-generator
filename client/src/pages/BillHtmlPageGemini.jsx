@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import axios from "axios";
+import { isAuthFailure } from "../auth";
 import { useParams, useNavigate } from "react-router-dom";
 import styles from "../assets/BillHtmlPageGemini.module.css"; // Create and use an external CSS file
 
@@ -146,6 +147,27 @@ const numberToWords = (num) => {
   return words + " Only";
 };
 
+const MAX_ITEM_ROWS = 12;
+const BASE_ROW_HEIGHT = 26;
+const MIN_ROW_HEIGHT = 22;
+const PX_PER_MM = 96 / 25.4;
+const A4_CONTENT_HEIGHT_PX = (297 - 16) * PX_PER_MM;
+const PRINT_FIT_SAFETY_PX = 4;
+
+function estimatePrintHeight(container, footerNote) {
+  const style = getComputedStyle(container);
+  const paddingTop = parseFloat(style.paddingTop) || 0;
+  const paddingBottom = parseFloat(style.paddingBottom) || 0;
+  let height = container.scrollHeight - paddingTop - paddingBottom;
+
+  if (footerNote) {
+    const marginTop = parseFloat(getComputedStyle(footerNote).marginTop) || 0;
+    height -= Math.max(0, marginTop - 4);
+  }
+
+  return height;
+}
+
 function BillHtmlPageGemini() {
   const { id } = useParams();
   const [bill, setBill] = useState(null);
@@ -157,6 +179,62 @@ function BillHtmlPageGemini() {
     "1. Goods once sold will not be taken back.\n2. Payment in 45 days from bill date.\n3. Subject to Ahmedabad Jurisdiction.",
   );
   const navigate = useNavigate();
+  const billRef = useRef(null);
+  const billId = bill?._id;
+  const maxEmptyRows = Math.max(0, MAX_ITEM_ROWS - (bill?.products?.length || 0));
+  const [fittedBillId, setFittedBillId] = useState(null);
+  const [emptyRows, setEmptyRows] = useState(0);
+  const [rowHeight, setRowHeight] = useState(BASE_ROW_HEIGHT);
+  const fitPasses = useRef(0);
+
+  if (bill && fittedBillId !== billId) {
+    fitPasses.current = 0;
+    setFittedBillId(billId);
+    setEmptyRows(maxEmptyRows);
+    setRowHeight(BASE_ROW_HEIGHT);
+  }
+
+  useLayoutEffect(() => {
+    if (!bill || fittedBillId !== billId || fitPasses.current > 8) return;
+
+    const container = billRef.current;
+    if (!container) return;
+
+    const footerNote = container.querySelector(
+      `.${CSS.escape(styles["footer-note"])}`,
+    );
+    const bodyRows = container.querySelectorAll(
+      `.${CSS.escape(styles["products-table"])} tbody tr`,
+    );
+    if (!bodyRows.length) return;
+
+    const limit = A4_CONTENT_HEIGHT_PX - PRINT_FIT_SAFETY_PX;
+    const printHeight = estimatePrintHeight(container, footerNote);
+    const delta = limit - printHeight;
+    const renderedRowHeight =
+      bodyRows[0].getBoundingClientRect().height || rowHeight;
+
+    if (delta < -1 && emptyRows > 0) {
+      const drop = Math.min(
+        emptyRows,
+        Math.max(1, Math.ceil(-delta / renderedRowHeight)),
+      );
+      fitPasses.current += 1;
+      setEmptyRows(emptyRows - drop);
+      return;
+    }
+
+    if (Math.abs(delta) <= 2) return;
+
+    const nextHeight = Math.max(
+      MIN_ROW_HEIGHT,
+      renderedRowHeight + delta / bodyRows.length,
+    );
+    if (Math.abs(nextHeight - rowHeight) <= 0.2) return;
+
+    fitPasses.current += 1;
+    setRowHeight(Math.round(nextHeight * 100) / 100);
+  }, [bill, billId, emptyRows, fittedBillId, rowHeight]);
 
   useEffect(() => {
     axios
@@ -166,16 +244,14 @@ function BillHtmlPageGemini() {
         console.log(res.data);
         setLoading(false);
       })
-      .catch(() => {
-        setLoading(false);
+      .catch((error) => {
+        if (!isAuthFailure(error)) setLoading(false);
       });
   }, [id]);
 
   if (loading) return <div>Loading...</div>;
   if (!bill) return <div>Bill not found</div>;
 
-  const totalRows = 10;
-  const emptyRows = totalRows - (bill.products || []).length;
   const totalAmount = formatCurrency(bill.total);
   const cgstAmount = formatCurrency(bill.cgst);
   const sgstAmount = formatCurrency(bill.sgst);
@@ -184,14 +260,25 @@ function BillHtmlPageGemini() {
 
   return (
     <>
+      <div className={styles["action-buttons"]}>
+        <button
+          className={styles["print-btn"]}
+          onClick={() => window.print()}
+        >
+          Save as PDF / Print
+        </button>
+        <button className={styles["back-btn"]} onClick={() => navigate(-1)}>
+          Back
+        </button>
+      </div>
       <div className={styles["bill-wrapper"]}>
-        <div className={styles["bill-container"]}>
+        <div className={styles["bill-container"]} ref={billRef}>
           {/* --- Header --- */}
           <div className={styles.header}>
             <div className={styles["header-main"]}>
               <h1>Jenyfer Paints</h1>
               <p>Manufacturer in: All Waterbase paints and Oilbase paints</p>
-              <p>
+              <p className={styles["header-address"]}>
                 21, Comet Estate, Opp. Anant Estate, Nagervel Hanuman Road,
                 Rakhial, Ahmedabad - 380023
               </p>
@@ -271,7 +358,10 @@ function BillHtmlPageGemini() {
           </div>
 
           {/* --- Products Table --- */}
-          <table className={styles["products-table"]}>
+          <table
+            className={styles["products-table"]}
+            style={{ "--item-row-height": `${rowHeight}px` }}
+          >
             <thead>
               <tr>
                 <th rowSpan="2" className={styles["sr-no"]}>
@@ -461,19 +551,6 @@ function BillHtmlPageGemini() {
           <p className={styles["footer-note"]}>
             This is a Computer Generated Invoice.
           </p>
-        </div>
-
-        {/* --- Action Buttons (Hidden on Print) --- */}
-        <div className={styles["action-buttons"]}>
-          <button
-            className={styles["print-btn"]}
-            onClick={() => window.print()}
-          >
-            Save as PDF / Print
-          </button>
-          <button className={styles["back-btn"]} onClick={() => navigate(-1)}>
-            Back
-          </button>
         </div>
       </div>
     </>

@@ -1,16 +1,14 @@
 // Layout.js
 import React from 'react';
-import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { Link, Outlet } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
+import { isAuthenticated, logout } from '../auth';
 
 function NavBar() {
-  const navigate = useNavigate();
-  const token = localStorage.getItem('token');
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
+    logout();
   };
-  if (!token) return null;
+  if (!isAuthenticated()) return null;
   return (
     <nav className="top-nav">
       <Link to="/">Bills</Link>

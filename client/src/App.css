@@ -204,35 +204,43 @@ button:disabled {
 
 .modal-content {
   background: #fff;
-  padding: 2.5rem;
+  padding: 2.5rem 2.5rem 1.25rem;
   border-radius: 12px;
   min-width: 50vw; /* Minimum width 50% of viewport width */
   max-width: 90vw; /* Maximum width 90% of viewport width */
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2); /* Stronger, softer shadow */
   display: flex;
   flex-direction: column;
-  gap: 1.2rem; /* Consistent spacing */
-
   max-height: 90vh; /* Limit height to 90% of viewport height */
-  overflow-y: auto; /* Enable vertical scrolling if content exceeds max-height */
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  overflow: hidden;
 }
 
 .modal-content h3 {
   text-align: center;
   margin-bottom: 1.5rem;
   color: #2c3e50;
+  flex-shrink: 0;
+}
+
+.modal-body {
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  -webkit-overflow-scrolling: touch;
 }
 
 .modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: 15px; /* Space between modal buttons */
-  margin-top: 1.5rem;
-  flex-shrink: 0; /* Prevent actions from shrinking */
-  padding-top: 10px; /* Add some padding above buttons if content scrolls */
-  background-color: #fff; /* Ensure background matches modal content when scrolled */
-  border-top: 1px solid #eee; /* Visual separator */
+  flex-shrink: 0; /* Keep the button row pinned to the bottom of the dialog */
+  margin-top: 1rem;
+  padding-top: 1rem;
+  background-color: #fff;
+  border-top: 1px solid #eee;
 }
 
 .modal-actions button {

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { isAuthFailure } from '../auth';
 
 const initialPackingRate = { value: '', rate: '' };
 
@@ -34,7 +35,9 @@ function ProductsPage() {
   const fetchProducts = () => {
     axios.get('/products')
       .then(res => setProducts(res.data))
-      .catch(err => toast.error('Error fetching products'));
+      .catch(err => {
+        if (!isAuthFailure(err)) toast.error('Error fetching products');
+      });
   };
 
   useEffect(fetchProducts, []);
@@ -90,7 +93,7 @@ function ProductsPage() {
       });
       fetchProducts();
     } catch (error) {
-      toast.error('Error adding product');
+      if (!isAuthFailure(error)) toast.error('Error adding product');
       console.error('Add Product Error:', error);
     }
   };
@@ -122,7 +125,7 @@ function ProductsPage() {
       });
       fetchProducts();
     } catch (error) {
-      toast.error('Error updating product');
+      if (!isAuthFailure(error)) toast.error('Error updating product');
       console.error('Update Product Error:', error);
     }
   };
@@ -225,6 +228,7 @@ function ProductsPage() {
         <div className="modal">
           <div className="modal-content">
             <h3>{showAdd ? 'Add Product' : 'Edit Product'}</h3>
+            <div className="modal-body">
             <div className="form-field">
               <label htmlFor="productName">Product Name:</label>
               <input id="productName" placeholder="Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
@@ -274,6 +278,7 @@ function ProductsPage() {
               <button type="button" onClick={addPackingRow} style={{ marginTop: '10px' }}>
                 Add New Packing
               </button>
+            </div>
             </div>
 
             <div className="modal-actions">

@@ -1,18 +1,27 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { consumeAuthMessage, setToken } from '../auth';
 
 function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const message = consumeAuthMessage();
+      if (message) toast.info(message);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const res = await axios.post('/login', { username, password });
-      localStorage.setItem('token', res.data.token);
+      setToken(res.data.token);
       toast.success('Login successful');
       navigate('/');
     } catch (err) {
