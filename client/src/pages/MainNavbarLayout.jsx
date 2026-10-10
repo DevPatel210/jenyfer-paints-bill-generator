@@ -1,14 +1,15 @@
 // Layout.js
-import React from 'react';
+import React, { useSyncExternalStore } from 'react';
 import { Link, Outlet } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
-import { isAuthenticated, logout } from '../auth';
+import { isAuthenticated, logout, subscribeAuth } from '../auth';
 
 function NavBar() {
+  const authed = useSyncExternalStore(subscribeAuth, isAuthenticated, isAuthenticated);
   const handleLogout = () => {
     logout();
   };
-  if (!isAuthenticated()) return null;
+  if (!authed) return null;
   return (
     <nav className="top-nav">
       <Link to="/">Bills</Link>

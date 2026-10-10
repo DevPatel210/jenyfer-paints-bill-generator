@@ -9,6 +9,16 @@ export const SESSION_EXPIRED_MESSAGE =
 let expiryTimer = null;
 let loggingOut = false;
 let watchersStarted = false;
+const authListeners = new Set();
+
+export function subscribeAuth(listener) {
+  authListeners.add(listener);
+  return () => authListeners.delete(listener);
+}
+
+function notifyAuthChange() {
+  authListeners.forEach((listener) => listener());
+}
 
 function parseJwtPayload(token) {
   const part = token.split(".")[1];
@@ -29,6 +39,7 @@ export function setToken(token) {
   localStorage.setItem(TOKEN_KEY, token);
   loggingOut = false;
   scheduleSessionExpiry();
+  notifyAuthChange();
 }
 
 export function isTokenExpired(token = getToken()) {
@@ -135,6 +146,7 @@ export function logout(message) {
   }
 
   localStorage.removeItem(TOKEN_KEY);
+  notifyAuthChange();
 
   if (message) {
     sessionStorage.setItem(AUTH_MESSAGE_KEY, message);
