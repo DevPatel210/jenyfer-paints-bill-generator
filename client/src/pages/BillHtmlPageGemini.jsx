@@ -301,7 +301,7 @@ function BillHtmlPageGemini() {
             <div className={styles["header-main"]}>
               <h1>Jenyfer Paints</h1>
               <p className={styles["header-tagline"]}>
-                Manufacturer in: All Water Base paints and Oil Base paints
+                Manufacturer in: All Water Base Paints and Oil Base Paints
               </p>
               <p className={styles["header-address"]}>
                 21, Comet Estate, Opp. Anant Estate, Nagervel Hanuman Road,
