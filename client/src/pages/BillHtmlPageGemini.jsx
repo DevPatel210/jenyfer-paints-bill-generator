@@ -3,6 +3,7 @@ import axios from "axios";
 import { isAuthFailure } from "../auth";
 import { useParams, useNavigate } from "react-router-dom";
 import styles from "../assets/BillHtmlPageGemini.module.css"; // Create and use an external CSS file
+import jpLogo from "../assets/jp-logo.svg";
 
 // Helper function to format the date as DD-MM-YYYY
 const formatDate = (dateString) => {
@@ -147,12 +148,12 @@ const numberToWords = (num) => {
   return words + " Only";
 };
 
-const MAX_ITEM_ROWS = 12;
+const MAX_ITEM_ROWS = 11;
 const BASE_ROW_HEIGHT = 26;
 const MIN_ROW_HEIGHT = 22;
 const PX_PER_MM = 96 / 25.4;
 const A4_CONTENT_HEIGHT_PX = (297 - 16) * PX_PER_MM;
-const PRINT_FIT_SAFETY_PX = 4;
+const PRINT_FIT_SAFETY_PX = 36;
 
 function estimatePrintHeight(container, footerNote) {
   const style = getComputedStyle(container);
@@ -181,16 +182,22 @@ function BillHtmlPageGemini() {
   const navigate = useNavigate();
   const billRef = useRef(null);
   const billId = bill?._id;
-  const maxEmptyRows = Math.max(0, MAX_ITEM_ROWS - (bill?.products?.length || 0));
   const [fittedBillId, setFittedBillId] = useState(null);
   const [emptyRows, setEmptyRows] = useState(0);
+  const [omittedItemRows, setOmittedItemRows] = useState(0);
   const [rowHeight, setRowHeight] = useState(BASE_ROW_HEIGHT);
   const fitPasses = useRef(0);
+  const visibleProductCount = Math.max(
+    0,
+    (bill?.products?.length || 0) - omittedItemRows,
+  );
+  const maxEmptyRows = Math.max(0, MAX_ITEM_ROWS - visibleProductCount);
 
   if (bill && fittedBillId !== billId) {
     fitPasses.current = 0;
     setFittedBillId(billId);
-    setEmptyRows(maxEmptyRows);
+    setOmittedItemRows(0);
+    setEmptyRows(Math.max(0, MAX_ITEM_ROWS - (bill.products?.length || 0)));
     setRowHeight(BASE_ROW_HEIGHT);
   }
 
@@ -224,6 +231,17 @@ function BillHtmlPageGemini() {
       return;
     }
 
+    if (
+      delta < -1 &&
+      emptyRows === 0 &&
+      omittedItemRows < 1 &&
+      renderedRowHeight <= MIN_ROW_HEIGHT + 0.5
+    ) {
+      fitPasses.current += 1;
+      setOmittedItemRows(1);
+      return;
+    }
+
     if (Math.abs(delta) <= 2) return;
 
     const nextHeight = Math.max(
@@ -234,7 +252,7 @@ function BillHtmlPageGemini() {
 
     fitPasses.current += 1;
     setRowHeight(Math.round(nextHeight * 100) / 100);
-  }, [bill, billId, emptyRows, fittedBillId, rowHeight]);
+  }, [bill, billId, emptyRows, fittedBillId, omittedItemRows, rowHeight]);
 
   useEffect(() => {
     axios
@@ -257,6 +275,10 @@ function BillHtmlPageGemini() {
   const sgstAmount = formatCurrency(bill.sgst);
   const igstAmount = formatCurrency(bill.igst);
   const grandTotalAmount = formatCurrency(bill.grandTotal);
+  const grandTotalValue = Number(bill.grandTotal);
+  const roundOffAmount = formatCurrency(
+    Number.isFinite(grandTotalValue) ? Math.round(grandTotalValue) : 0
+  );
 
   return (
     <>
@@ -275,9 +297,12 @@ function BillHtmlPageGemini() {
         <div className={styles["bill-container"]} ref={billRef}>
           {/* --- Header --- */}
           <div className={styles.header}>
+            <img className={styles["jp-logo"]} src={jpLogo} alt="" />
             <div className={styles["header-main"]}>
               <h1>Jenyfer Paints</h1>
-              <p>Manufacturer in: All Waterbase paints and Oilbase paints</p>
+              <p className={styles["header-tagline"]}>
+                Manufacturer in: All Water Base paints and Oil Base paints
+              </p>
               <p className={styles["header-address"]}>
                 21, Comet Estate, Opp. Anant Estate, Nagervel Hanuman Road,
                 Rakhial, Ahmedabad - 380023
@@ -391,7 +416,7 @@ function BillHtmlPageGemini() {
               </tr>
             </thead>
             <tbody>
-              {bill.products.map((p, i) => {
+              {bill.products.slice(0, visibleProductCount).map((p, i) => {
                 const rate = formatCurrency(p.rate);
                 const amount = formatCurrency(p.amount);
                 const discount = formatDiscount(p.discount, p.amount);
@@ -512,6 +537,15 @@ function BillHtmlPageGemini() {
                       className={`${styles["align-right"]} ${styles["ps-col"]}`}
                     >
                       <strong>{grandTotalAmount.ps}</strong>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>ROUND OFF</td>
+                    <td className={styles["align-right"]}>{roundOffAmount.rs}</td>
+                    <td
+                      className={`${styles["align-right"]} ${styles["ps-col"]}`}
+                    >
+                      {roundOffAmount.ps}
                     </td>
                   </tr>
                 </tbody>
